@@ -22,61 +22,64 @@ RUN cd oracle && make install
 RUN cd keys-generator && make install
 
 
-FROM rust:alpine as rust-build-env
 
-ENV OPENSSL_STATIC=true
-RUN apk add --no-cache musl-dev openssl openssl-dev
+FROM debian:buster AS rust-build-env
 
-RUN apk add mc
+ENV RUSTUP_VER=1.51.0
 
+RUN apt update && apt install -y curl build-essential wget curl libssl-dev pkg-config
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/run  && \
+    sh /tmp/run -y --default-toolchain $RUSTUP_VER
 
 COPY --from=go-build-env /src/ /src/
 
-ENV RUST_BACKTRACE=full
-RUN cd /src/orchestrator && cargo install --locked --path orchestrator
-RUN cd /src/orchestrator && cargo install --locked --path register_delegate_keys
+
+RUN cd /src/orchestrator && /root/.cargo/bin/cargo install --locked --path orchestrator
+RUN cd /src/orchestrator && /root/.cargo/bin/cargo install --locked --path register_delegate_keys
 
 
-## Final image
-#FROM alpine:latest
-#
-## Install ca-certificates
-#RUN apk add --update ca-certificates bash
-#WORKDIR /root
-#
-## Copy over binaries from the build-env
-#COPY --from=go-build-env /go/bin/ /usr/local/bin/
-#COPY --from=go-build-env /src/orchestrator/target /usr/local/bin/
-#
+# Final image
+FROM alpine:latest
+
+# Install ca-certificates
+RUN apk add --update ca-certificates bash
+WORKDIR /root
+
+# Copy over binaries from the build-env
+COPY --from=go-build-env /go/bin/ /usr/local/bin/
+COPY --from=rust-build-env /src/orchestrator/target/release/orchestrator /usr/local/bin/orchestrator
+COPY --from=rust-build-env /src/orchestrator/target/release/register-peggy-delegate-keys /usr/local/bin/register-peggy-delegate-keys
+
+###
+### Envs
+###
+ENV MY_USER="mhub" \
+    MY_GROUP="mhub" \
+    MY_UID="1000" \
+    MY_GID="1000"
+
 ####
-#### Envs
+#### User/Group
 ####
-#ENV MY_USER="mhub" \
-#    MY_GROUP="mhub" \
-#    MY_UID="1000" \
-#    MY_GID="1000"
-#
-#####
-##### User/Group
-#####
-#RUN set -eux \
-#    && addgroup -g ${MY_GID} ${MY_GROUP} \
-#    && adduser -u ${MY_UID} -G ${MY_GROUP} -s /bin/sh -D ${MY_USER}
-#
-#
-#COPY ./docker-entrypoint.sh /docker-entrypoint.sh
-#
-## Must set this value for the bash shell to source
-## the '/etc/bashrc' file.
-## See: https://stackoverflow.com/q/29021704
-#ENV BASH_ENV /etc/bashrc
-#COPY data/bashrc /etc/bashrc
-#
-#
-#RUN chmod +x /docker-entrypoint.sh
-#
-#
-#USER mhub
-#WORKDIR /home/mhub
-#
-#ENTRYPOINT ["/docker-entrypoint.sh"]
+RUN set -eux \
+    && addgroup -g ${MY_GID} ${MY_GROUP} \
+    && adduser -u ${MY_UID} -G ${MY_GROUP} -s /bin/sh -D ${MY_USER}
+
+
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+
+# Must set this value for the bash shell to source
+# the '/etc/bashrc' file.
+# See: https://stackoverflow.com/q/29021704
+ENV BASH_ENV /etc/bashrc
+COPY data/bashrc /etc/bashrc
+
+
+RUN chmod +x /docker-entrypoint.sh
+
+
+USER mhub
+WORKDIR /home/mhub
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
