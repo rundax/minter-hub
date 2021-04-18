@@ -1,11 +1,29 @@
 version: "3.7"
 
 services:
-  mhub:
-    image: ${DOCKER_SERVER_HOST}:${DOCKER_SERVER_PORT}/${DOCKER_PROJECT_PATH}/mhub:${DOCKER_IMAGE_VERSION}
+#  mhub:
+#    image: ${DOCKER_SERVER_HOST}:${DOCKER_SERVER_PORT}/${DOCKER_PROJECT_PATH}/mhub:${DOCKER_IMAGE_VERSION}
+##    user: ${DOCKER_UID:-1000}:${DOCKER_GID:-1000}
+#    restart: unless-stopped
+#    volumes:
+#      - ./data:/home/mhub:rw
+#    env_file:
+#      - .env
+#  mhub-oracle:
+#    image: ${DOCKER_SERVER_HOST}:${DOCKER_SERVER_PORT}/${DOCKER_PROJECT_PATH}/mhub-oracle:${DOCKER_IMAGE_VERSION}
+##    user: ${DOCKER_UID:-1000}:${DOCKER_GID:-1000}
+#    restart: unless-stopped
+#    volumes:
+#      - ./data:/home/mhub:rw
+#    env_file:
+#      - .env
+
+  orchestrator:
+    image: ${DOCKER_SERVER_HOST}:${DOCKER_SERVER_PORT}/${DOCKER_PROJECT_PATH}/orchestrator:${DOCKER_IMAGE_VERSION}
 #    user: ${DOCKER_UID:-1000}:${DOCKER_GID:-1000}
     restart: unless-stopped
     volumes:
       - ./data:/home/mhub:rw
     env_file:
       - .env
+

@@ -11,12 +11,28 @@ build: ## build environment and initialize composer and project dependencies
 		--build-arg DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION) \
 		--build-arg MINTER_HUB_TAG=$(MINTER_HUB_TAG)
 
-#	docker build .docker/mhub/ \
-#		--tag $(DOCKER_SERVER_HOST):$(DOCKER_SERVER_PORT)/$(DOCKER_PROJECT_PATH)/mhub:$(DOCKER_IMAGE_VERSION) \
-#		--build-arg DOCKER_SERVER_HOST=$(DOCKER_SERVER_HOST) \
-#		--build-arg DOCKER_SERVER_PORT=$(DOCKER_SERVER_PORT) \
-#		--build-arg DOCKER_PROJECT_PATH=$(DOCKER_PROJECT_PATH) \
-#		--build-arg DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION)
+	docker build .docker/mhub/ \
+		--tag $(DOCKER_SERVER_HOST):$(DOCKER_SERVER_PORT)/$(DOCKER_PROJECT_PATH)/mhub:$(DOCKER_IMAGE_VERSION) \
+		--build-arg DOCKER_SERVER_HOST=$(DOCKER_SERVER_HOST) \
+		--build-arg DOCKER_SERVER_PORT=$(DOCKER_SERVER_PORT) \
+		--build-arg DOCKER_PROJECT_PATH=$(DOCKER_PROJECT_PATH) \
+		--build-arg DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION)
+
+	docker build .docker/mhub-oracle/ \
+		--tag $(DOCKER_SERVER_HOST):$(DOCKER_SERVER_PORT)/$(DOCKER_PROJECT_PATH)/mhub-oracle:$(DOCKER_IMAGE_VERSION) \
+		--build-arg DOCKER_SERVER_HOST=$(DOCKER_SERVER_HOST) \
+		--build-arg DOCKER_SERVER_PORT=$(DOCKER_SERVER_PORT) \
+		--build-arg DOCKER_PROJECT_PATH=$(DOCKER_PROJECT_PATH) \
+		--build-arg DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION)
+
+	docker build .docker/orchestrator/ \
+		--tag $(DOCKER_SERVER_HOST):$(DOCKER_SERVER_PORT)/$(DOCKER_PROJECT_PATH)/orchestrator:$(DOCKER_IMAGE_VERSION) \
+		--build-arg DOCKER_SERVER_HOST=$(DOCKER_SERVER_HOST) \
+		--build-arg DOCKER_SERVER_PORT=$(DOCKER_SERVER_PORT) \
+		--build-arg DOCKER_PROJECT_PATH=$(DOCKER_PROJECT_PATH) \
+		--build-arg DOCKER_IMAGE_VERSION=$(DOCKER_IMAGE_VERSION)
+
+
 
 up:
 	docker-compose up -d

@@ -1,13 +1,6 @@
-FROM golang:1.16.2-alpine AS go-build-env
+FROM golang:1.16.2-buster AS go-build-env
 
-# Set up dependencies
-ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3 curl wget zip
-
-
-## Install minimum necessary dependencies, build Cosmos SDK, remove packages
-RUN apk add --no-cache $PACKAGES
-
-ARG MINTER_HUB_TAG
+RUN apt update && apt install -y git
 
 WORKDIR /src
 
@@ -15,36 +8,26 @@ WORKDIR /src
 RUN  git clone https://github.com/MinterTeam/minter-hub.git /src
 RUN git checkout $MINTER_HUB_TAG
 
-
 RUN cd chain && make install
 RUN cd minter-connector && make install
 RUN cd oracle && make install
 RUN cd keys-generator && make install
 
 
+FROM rust:1.51.0-slim-buster AS rust-build-env
 
-FROM debian:buster AS rust-build-env
-
-ENV RUSTUP_VER=1.51.0
-
-RUN apt update && apt install -y curl build-essential wget curl libssl-dev pkg-config
-
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/run  && \
-    sh /tmp/run -y --default-toolchain $RUSTUP_VER
+RUN apt-get update && apt install -y libssl-dev build-essential pkg-config
 
 COPY --from=go-build-env /src/ /src/
 
+RUN cd /src/orchestrator && \
+    cargo install --locked --path orchestrator && \
+    cargo install --locked --path register_delegate_keys
 
-RUN cd /src/orchestrator && /root/.cargo/bin/cargo install --locked --path orchestrator
-RUN cd /src/orchestrator && /root/.cargo/bin/cargo install --locked --path register_delegate_keys
+#Final image
+FROM debian:buster-slim
 
-
-# Final image
-FROM alpine:latest
-
-# Install ca-certificates
-RUN apk add --update ca-certificates bash
-WORKDIR /root
+RUN apt-get update && apt install -y libssl1.1 wget && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Copy over binaries from the build-env
 COPY --from=go-build-env /go/bin/ /usr/local/bin/
@@ -55,31 +38,27 @@ COPY --from=rust-build-env /src/orchestrator/target/release/register-peggy-deleg
 ### Envs
 ###
 ENV MY_USER="mhub" \
-    MY_GROUP="mhub" \
-    MY_UID="1000" \
-    MY_GID="1000"
+    MY_GROUP="mhub"
 
-####
-#### User/Group
-####
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
+
+###
+### User/Group
+###
 RUN set -eux \
-    && addgroup -g ${MY_GID} ${MY_GROUP} \
-    && adduser -u ${MY_UID} -G ${MY_GROUP} -s /bin/sh -D ${MY_USER}
+	&& groupadd -g ${DOCKER_GID} -r ${MY_GROUP} \
+	&& useradd -d /home/${MY_USER} -u ${DOCKER_UID} -m -s /bin/bash -g ${MY_GROUP} ${MY_USER}
+
 
 
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
-
-# Must set this value for the bash shell to source
-# the '/etc/bashrc' file.
-# See: https://stackoverflow.com/q/29021704
-ENV BASH_ENV /etc/bashrc
-COPY data/bashrc /etc/bashrc
-
-
 RUN chmod +x /docker-entrypoint.sh
 
+RUN apt-get update && apt-get install -y procps
 
 USER mhub
 WORKDIR /home/mhub
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
+
