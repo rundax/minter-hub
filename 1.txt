@@ -1,0 +1,17 @@
+mhub@903199b658d5:~$ mhub keys add --keyring-backend test validator1
+
+- name: validator1
+  type: local
+  address: hub1smlasufkxtylhg0yl3qz6c0my2mxqrkq3zuv5j
+  pubkey: hubpub1addwnpepq2akg4yct2gdn26p5qzssp3k94hm47v2ade6dysmku48yvpx0e9y2f89acd
+  mnemonic: ""
+  threshold: 0
+  pubkeys: []
+
+
+mhub@903199b658d5:~$ mhub tendermint show-validator
+cosmosvalconspub1zcjduepq49gjaycfmltc530e7lagln74ucza3sr8ay6ge42kdw4sulx05k5slkmuxh
+
+
+
+mhub tx staking create-validator --from=validator1 --keyring-backend=test --amount=10hub --pubkey=cosmosvalconspub1zcjduepq49gjaycfmltc530e7lagln74ucza3sr8ay6ge42kdw4sulx05k5slkmuxh  --commission-max-change-rate="0.1" --commission-max-rate="1" --commission-rate="0.1" --min-self-delegation="1" --chain-id=mhub-test-9

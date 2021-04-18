@@ -5,11 +5,10 @@ ARG DOCKER_IMAGE_VERSION=master
 
 FROM ${DOCKER_SERVER_HOST}:${DOCKER_SERVER_PORT}/${DOCKER_PROJECT_PATH}/base:${DOCKER_IMAGE_VERSION}
 
-COPY ./docker-entrypoint.d/100-init.sh /docker-entrypoint.d/100-init.sh
 
 STOPSIGNAL SIGINT
-#"sh", "-c",
-CMD [ "echo",  \
+
+CMD [ "sh", "-c",  \
     "orchestrator", \
     "--cosmos-phrase=\"${ORCHESTRATOR_COSMOS_PHRASE}\"", \
     "--ethereum-key=\"${ORCHESTRATOR_ETHEREUM_KEY}\"", \

@@ -4,6 +4,8 @@ RUN apt update && apt install -y git
 
 WORKDIR /src
 
+ARG MINTER_HUB_TAG
+
 # Add source files
 RUN  git clone https://github.com/MinterTeam/minter-hub.git /src
 RUN git checkout $MINTER_HUB_TAG
